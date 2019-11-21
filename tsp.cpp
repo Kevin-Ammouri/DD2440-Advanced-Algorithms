@@ -170,7 +170,7 @@ high_resolution_clock::time_point start;
 bool deadline() {
     auto stop1 = high_resolution_clock::now(); 
     auto duration1 = duration_cast<microseconds>(stop1 - start); 
-    if(duration1.count() > 1970000){
+    if(duration1.count() > 1950000){
         return true;
     }
     return false;
@@ -212,6 +212,86 @@ vector<int> twoOpt(int n, vector<vector<int>> &adjW, vector<int> &tour) {
     return tour;
 }
 
+vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j, int k) {
+    int A = tour[i - 1];
+    int B = tour[i];
+    int C = tour[j - 1];
+    int D = tour[j];
+    int E = tour[k - 1];
+    int F = tour[k % tour.size()];
+	
+	int idx = 0;
+    
+    vector<int> d(5);
+    d[0] = adjW[A][B] + adjW[C][D] + adjW[E][F];
+    d[1] = adjW[A][C] + adjW[B][D] + adjW[E][F];
+    d[2] = adjW[A][B] + adjW[C][E] + adjW[D][F];
+    d[3] = adjW[A][D] + adjW[E][B] + adjW[C][F];
+    d[4] = adjW[F][B] + adjW[C][D] + adjW[E][A];
+    int min = d[0];
+
+    for(int l = 1; l < 5; l++){
+        if(d[l] < min) { // testa <= min sen i kattis
+            min = d[l];
+            idx = l;
+        }
+    }
+    
+    vector<int> tmp = tour;
+    int l = i; int t;
+    
+    switch (idx)
+    {
+    case 0:
+        return tour;
+        break;
+    
+    case 1: 
+        return swap(i, j, tour);
+        break;
+    case 2: 
+        return swap(j, k, tour);
+        break;    
+    case 3: 
+        
+        for(t = j; t < k; t++) {
+            tmp[l] = tour[t];
+            l++;
+        }
+        for(t = i; t < j; t++) {
+            tmp[l] = tour[t];
+            l++;
+        }
+
+        return tmp;
+        break;
+    case 4: 
+        return swap(i, k, tour);
+        break;
+    default:
+        break;
+    }
+
+    return tour;
+}
+
+void threeOpt(vector<int> &tour, vector<vector<int>> &adjW, int n) {
+    start = high_resolution_clock::now();
+    bool loop = true;
+    while(loop){
+        for(int i = 1; i < n && loop; i++) {
+            for(int j = i+2; j < n && loop; j++) {
+                for(int k = j+2; k < n && loop; k++) {
+                    if(deadline()){
+                        //cout << "deadline reached\n";
+                        return;
+                    } 
+                    tour = threeTour(tour, adjW, i, j, k);
+                }
+            }
+        }
+    }
+}
 
 int main(int argc, char **argv) {
     int n;
@@ -234,7 +314,7 @@ int main(int argc, char **argv) {
         }
     }
     //cout << "MST:" << endl;
-    //vector<vector<int>> adj = mst(n, points, adjW);
+    vector<vector<int>> adj = mst(n, points, adjW);
     /*for (int i = 0; i < adj.size(); i++) {
         for (int j = 0; j < adj[i].size(); j++) {
             cout << adj[i][j] << ' ';
@@ -242,29 +322,29 @@ int main(int argc, char **argv) {
         cout << endl;
     }*/
     //cout << "MIN MATCHING:" << endl;
-    //minMatching(adj, adjW);
+    minMatching(adj, adjW);
     /*for (int i = 0; i < adj.size(); i++) {
         for (int j = 0; j < adj[i].size(); j++) {
             cout << adj[i][j] << ' ';
         }
         cout << endl;
     }*/
-    //vector<int> tour = eulerTour(adj);
+    vector<int> tour = eulerTour(adj);
     /*for (int i = 0; i < tour.size(); i++) {
         cout << tour[i] << " ";
     }*/
-    //vector<int> res = cutShort(n, tour);
-    vector<int> res = greedyTour(n, points);
+    vector<int> res = cutShort(n, tour);
+    //vector<int> res = greedyTour(n, points);
     
-    /*for (int i = 0; i < res.size(); i++) {
+    for (int i = 0; i < res.size(); i++) {
+        cout << res[i] << endl;
+    }
+    
+    //vector<int> tour = twoOpt(n, adjW, res);
+    threeOpt(res, adjW, n);
+    /*for (int i = 0; i < n; i++) {
         cout << res[i] << endl;
     }*/
-    
-    vector<int> tour = twoOpt(n, adjW, res);
-
-    for (int i = 0; i < n; i++) {
-        cout << tour[i] << endl;
-    }
     //cout << endl;
 
     return 0;
