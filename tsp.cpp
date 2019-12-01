@@ -342,9 +342,9 @@ int main(int argc, char **argv) {
     
     //vector<int> tour = twoOpt(n, adjW, res);
     threeOpt(res, adjW, n);
-    /*for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         cout << res[i] << endl;
-    }*/
+    }
     //cout << endl;
 
     return 0;
