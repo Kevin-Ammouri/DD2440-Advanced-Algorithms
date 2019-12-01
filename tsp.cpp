@@ -19,7 +19,7 @@ struct Edge {
 int dist(vector<double> &p1, vector<double> &p2) {
     return round(sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2)));
 }
-vector<vector<int>> mst(int n, vector<vector<double>> &points, vector<vector<int>> adjW) {
+vector<vector<int>> mst(int n, vector<vector<double>> &points, vector<vector<int>> &adjW) {
     int total_weight = 0;
     vector<bool> selected(n, false);
     vector<Edge> min_e(n);
@@ -53,7 +53,8 @@ vector<vector<int>> mst(int n, vector<vector<double>> &points, vector<vector<int
     
     return adj;
 }
-vector<int> cutShort(int n, vector<int> tour) {
+
+vector<int> cutShort(int n, vector<int> &tour) {
     vector<int> shortcut;
     bool visited[n] = {false};
     for(int i = 0; i < tour.size(); i++) {
@@ -63,25 +64,6 @@ vector<int> cutShort(int n, vector<int> tour) {
         }
     }
     return shortcut;
-}
-
-vector<int> greedyTour(int n , vector<vector<double>> &points) {
-    vector<int> tour(n);
-    bool used[n] = {false};
-    int ran = rand() % n;
-    used[ran] = true;
-    int best;
-    for(int i = 1; i < n; i++) {
-        best = -1;
-        for(int j = 0; j < n; j++) {
-            if(!used[j] && (best == -1 || (dist(points[tour[i-1]], points[j]) < dist(points[tour[i-1]], points[best])))) {
-                best = j;
-            }
-        }
-        tour[i] = best;
-        used[best] = true;
-    }
-    return tour;
 }
 
 vector<int> eulerTour(vector<vector<int>> &adj){
@@ -147,71 +129,20 @@ int totalDist(int n, vector<int> &tour, vector<vector<int>> &adjW) {
     sum += adjW[0][n-1];
     return sum;
 }
-vector<int> swap(int s, int f, vector<int> &tour) {
-    vector<int> res(tour.size());
-    /*cout << "s: " << s << ", f: " << f << endl;
-    for(int i = 0; i < tour.size(); i++) {
-        cout << tour[i] << ' ';
-    }
-    cout << endl;*/
-    res = tour;
-    int k = f;
-    for(s;s <= f; s++) {
-        res[s] = tour[k];
-        k--;
-    }
-
-    /*for(int i = 0; i < res.size(); i++) {
-        cout << res[i] << ' ';
-    }
-    cout << endl;*/
-    return res;
+void swap(int s, int f, vector<int> &tour) {
+    std::reverse(std::begin(tour)+s, std::begin(tour)+f+1);
 }
 high_resolution_clock::time_point start;
 bool deadline() {
     auto stop1 = high_resolution_clock::now(); 
     auto duration1 = duration_cast<microseconds>(stop1 - start); 
-    if(duration1.count() > 1980000){
+    if(duration1.count() > 1990000){
         return true;
     }
     return false;
 }
-vector<int> twoOpt(int n, vector<vector<int>> &adjW, vector<int> &tour) {
-    int best = totalDist(n, tour, adjW);
-    int tmp;
-    bool loop = true;
-    vector<int> currentTour;
-    
-    while(loop) {
-        if(deadline())  {
-            return tour;
-        }
-        for(int i = 1; i < n && loop; i++) {
-            if(deadline())  {
-                return tour;
-            }
-            for(int j = i+1; j < n && loop; j++) {
- 
-                if(deadline())  {
-                    loop = false;
-                    return tour;
-                }
-                currentTour = swap(i, j - 1, tour);
-                tmp = totalDist(n, currentTour, adjW);
-                if(tmp < best){
-                    //cout << "found better path" << endl;
-                    best = tmp;
-                    //cout << "new best " << tmp << endl;
-                    tour = currentTour;
-                }
 
-            }
-        }
-    }
-    return tour;
-}
-
-vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j, int k) {
+void threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j, int k) {
     int A = tour[i - 1];
     int B = tour[i];
     int C = tour[j - 1];
@@ -221,7 +152,7 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
 	
 	int idx = 0;
     
-    vector<int> d(5);
+    int d[5];
     d[0] = adjW[A][B] + adjW[C][D] + adjW[E][F];
     d[1] = adjW[A][C] + adjW[B][D] + adjW[E][F];
     d[2] = adjW[A][B] + adjW[C][E] + adjW[D][F];
@@ -236,42 +167,39 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
         }
     }
     
-    vector<int> tmp = tour;
+    vector<int> tmp;
+    
     int l = i; int t;
     
     switch (idx)
     {
     case 0:
-        return tour;
         break;
     
     case 1: 
-        return swap(i, j-1, tour);
+        swap(i, j-1, tour);
         break;
     case 2: 
-        return swap(j, k-1, tour);
+         swap(j, k-1, tour);
         break;    
     case 3: 
-        
+        tmp = tour;
         for(t = j; t < k; t++) {
-            tmp[l] = tour[t];
+            tour[l] = tmp[t];
             l++;
         }
         for(t = i; t < j; t++) {
-            tmp[l] = tour[t];
+            tour[l] = tmp[t];
             l++;
         }
 
-        return tmp;
         break;
     case 4: 
-        return swap(i, k-1, tour);
+        swap(i, k-1, tour);
         break;
     default:
         break;
     }
-
-    return tour;
 }
 
 void threeOpt(vector<int> &tour, vector<vector<int>> &adjW, int n) {
@@ -279,20 +207,13 @@ void threeOpt(vector<int> &tour, vector<vector<int>> &adjW, int n) {
         if(deadline()){
             return;
         } 
-        for(int i = 1; i < n; i++) {
-            if(deadline()){
-                return;
-            } 
-            for(int j = i+2; j < n; j++) {
-                if(deadline()){
-                    return;
-                } 
-                for(int k = j+2; k < n; k++) {
+        for(int i = 1; i < n-2; i++) {
+			for(int j = n - 2; j>i+2; j--){  
+                for(int k = j+2; k < n + (i > 0); k++) {
                     if(deadline()){
-                        //cout << "deadline reached\n";
                         return;
                     } 
-                    tour = threeTour(tour, adjW, i, j, k);
+                    threeTour(tour, adjW, i, j, k-1);
                 }
             }
         }
@@ -320,36 +241,20 @@ int main(int argc, char **argv) {
             }
         }
     }
-    //cout << "MST:" << endl;
+
     vector<vector<int>> adj = mst(n, points, adjW);
-    /*for (int i = 0; i < adj.size(); i++) {
-        for (int j = 0; j < adj[i].size(); j++) {
-            cout << adj[i][j] << ' ';
-        }
-        cout << endl;
-    }*/
-    //cout << "MIN MATCHING:" << endl;
+
     minMatching(adj, adjW);
-    /*for (int i = 0; i < adj.size(); i++) {
-        for (int j = 0; j < adj[i].size(); j++) {
-            cout << adj[i][j] << ' ';
-        }
-        cout << endl;
-    }*/
+
     vector<int> tour = eulerTour(adj);
-    /*for (int i = 0; i < tour.size(); i++) {
-        cout << tour[i] << " ";
-    }*/
-    vector<int> res = cutShort(n, tour);
-    //vector<int> res = greedyTour(n, points);
-    
-    
-    //tour = twoOpt(n, adjW, res);
-    threeOpt(res, adjW, n);
+
+    tour = cutShort(n, tour);
+
+
+    threeOpt(tour, adjW, n);
     for (int i = 0; i < n; i++) {
-        cout << res[i] << endl;
+        cout << tour[i] << endl;
     }
-    //cout << endl;
 
     return 0;
 }
