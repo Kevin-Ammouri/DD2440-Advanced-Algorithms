@@ -144,6 +144,7 @@ int totalDist(int n, vector<int> &tour, vector<vector<int>> &adjW) {
     for(int i = 0; i < n - 1; i++) {
         sum += adjW[tour[i]][tour[i+1]];
     }
+    sum += adjW[0][n-1];
     return sum;
 }
 vector<int> swap(int s, int f, vector<int> &tour) {
@@ -170,7 +171,7 @@ high_resolution_clock::time_point start;
 bool deadline() {
     auto stop1 = high_resolution_clock::now(); 
     auto duration1 = duration_cast<microseconds>(stop1 - start); 
-    if(duration1.count() > 1950000){
+    if(duration1.count() > 1980000){
         return true;
     }
     return false;
@@ -180,24 +181,22 @@ vector<int> twoOpt(int n, vector<vector<int>> &adjW, vector<int> &tour) {
     int tmp;
     bool loop = true;
     vector<int> currentTour;
-    start = high_resolution_clock::now();
+    
     while(loop) {
-        if(deadline()){
-            loop = false;
-            break;
+        if(deadline())  {
+            return tour;
         }
-        for(int i = 0; i < n-1 && loop; i++) {
-            if(deadline()){
-                loop = false;
-                break;
+        for(int i = 1; i < n && loop; i++) {
+            if(deadline())  {
+                return tour;
             }
             for(int j = i+1; j < n && loop; j++) {
  
                 if(deadline())  {
                     loop = false;
-                    break;
+                    return tour;
                 }
-                currentTour = swap(i, j, tour);
+                currentTour = swap(i, j - 1, tour);
                 tmp = totalDist(n, currentTour, adjW);
                 if(tmp < best){
                     //cout << "found better path" << endl;
@@ -231,7 +230,7 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
     int min = d[0];
 
     for(int l = 1; l < 5; l++){
-        if(d[l] < min) { // testa <= min sen i kattis
+        if(d[l] <= min) { // testa <= min sen i kattis
             min = d[l];
             idx = l;
         }
@@ -247,10 +246,10 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
         break;
     
     case 1: 
-        return swap(i, j, tour);
+        return swap(i, j-1, tour);
         break;
     case 2: 
-        return swap(j, k, tour);
+        return swap(j, k-1, tour);
         break;    
     case 3: 
         
@@ -266,7 +265,7 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
         return tmp;
         break;
     case 4: 
-        return swap(i, k, tour);
+        return swap(i, k-1, tour);
         break;
     default:
         break;
@@ -276,12 +275,19 @@ vector<int> threeTour(vector<int> &tour, vector<vector<int>> &adjW, int i, int j
 }
 
 void threeOpt(vector<int> &tour, vector<vector<int>> &adjW, int n) {
-    start = high_resolution_clock::now();
-    bool loop = true;
-    while(loop){
-        for(int i = 1; i < n && loop; i++) {
-            for(int j = i+2; j < n && loop; j++) {
-                for(int k = j+2; k < n && loop; k++) {
+    while(true){
+        if(deadline()){
+            return;
+        } 
+        for(int i = 1; i < n; i++) {
+            if(deadline()){
+                return;
+            } 
+            for(int j = i+2; j < n; j++) {
+                if(deadline()){
+                    return;
+                } 
+                for(int k = j+2; k < n; k++) {
                     if(deadline()){
                         //cout << "deadline reached\n";
                         return;
@@ -295,6 +301,7 @@ void threeOpt(vector<int> &tour, vector<vector<int>> &adjW, int n) {
 
 int main(int argc, char **argv) {
     int n;
+    start = high_resolution_clock::now();
     cin >> n;
     vector<vector<double>> points(n, vector<double>(2));
     for(int i = 0; i < n; i++) {
@@ -336,11 +343,8 @@ int main(int argc, char **argv) {
     vector<int> res = cutShort(n, tour);
     //vector<int> res = greedyTour(n, points);
     
-    for (int i = 0; i < res.size(); i++) {
-        cout << res[i] << endl;
-    }
     
-    //vector<int> tour = twoOpt(n, adjW, res);
+    //tour = twoOpt(n, adjW, res);
     threeOpt(res, adjW, n);
     for (int i = 0; i < n; i++) {
         cout << res[i] << endl;
